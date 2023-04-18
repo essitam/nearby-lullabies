@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>nearby lullabies</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/colorshifts.css">
+    <script type="text/javascript" src="js/paper-full.js"></script>
+    <script type="text/paperscript" canvas="canvas">
+    var points = 25;
+
+    // The distance between the points:
+    var length = 35;
+    var fillColor = 'blue';
+
+    var path = new Path({
+        // strokeColor: '#E4141B',
+        strokeWidth: 20,
+        strokeCap: 'round'
+    });
+    // var width, height, center;
+    // var points = 10;
+    // var smooth = true;
+    var textPath = path;
+    var pairtextboundswidth = [];
+    var mousePos = view.center / 2;
+    // var pathHeight = mousePos.y;
+    var glyphTexts = [];
+    var xOffsets = [0];
+    var str = "A lullaby is a moment between waking and sleeping. ";
+
+    var start = view.center / [10, 1];
+    for (var i = 0; i < points; i++)
+        path.add(start + new Point(i * length, 0));
+
+    function onMouseMove(event) {
+        path.firstSegment.point = event.point;
+        for (var i = 0; i < points - 1; i++) {
+            var segment = path.segments[i];
+            var nextSegment = segment.next;
+            var vector = segment.point - nextSegment.point;
+            vector.length = length;
+            nextSegment.point = segment.point - vector;
+        }
+        path.smooth({ type: 'continuous' });
+        moveText(path);
+
+    }
+
+    var createAlignedText = function(str, path, style) {
+        if (str && str.length > 0 && path) {
+            // create PointText object for each glyph
+            // var glyphTexts = [];
+            for (var i = 0; i < str.length; i++) {
+                glyphTexts[i] = createPointText(str.substring(i, i+1), style);
+                glyphTexts[i].justification = "center";
+            }
+            // for each glyph find center xOffset
+
+            for (var i = 1; i < str.length; i++) {
+                var pairText = createPointText(str.substring(i - 1, i + 1), style);
+                pairText.remove();
+                xOffsets[i] = xOffsets[i - 1] + pairText.bounds.width -
+                    glyphTexts[i - 1].bounds.width / 2 - glyphTexts[i].bounds.width / 2;
+                    // pairtextboundswidth.push(pairText.bounds.width);
+            }
+            // set point for each glyph and rotate glyph aorund the point
+            for (var i = 0; i < str.length; i++) {
+                var centerOffs = xOffsets[i];
+                if (path.length < centerOffs) {
+                    if (path.closed) {
+                        centerOffs = centerOffs % path.length;
+                    }  else {
+                        centerOffs = undefined;
+                    }
+                }
+                if (centerOffs === undefined) {
+                    glyphTexts[i].remove();
+                } else {
+                    var pathPoint = path.getPointAt(centerOffs);
+                    glyphTexts[i].point = pathPoint;
+                    var tan = path.getTangentAt(centerOffs);
+                    glyphTexts[i].rotate(tan.angle, pathPoint);
+                }
+            }
+        }
+    }
+
+    // create a PointText object for a string and a style
+    var createPointText = function(str, style) {
+        var text = new PointText();
+        text.content = str;
+        text.style = {
+            fillColor: '#45CEEF',
+        };
+        if (style) {
+            if (style.font) text.font = style.font;
+            if (style.fontFamily) text.fontFamily = style.fontFamily;
+            if (style.fontSize) text.fontSize = style.fontSize;
+            if (style.fontWieght) text.fontWeight = style.fontWeight;
+            if (style.fillColor) text.fillColor = style.fillColor;
+                  }
+        return text;
+    }
+    //same function as createAlignedText but with only the movement of the glyphs
+    var moveText = function(path, style) {
+            // set point for each glyph and rotate glyph aorund the point
+            for (var i = 0; i < glyphTexts.length; i++) {
+                var centerOffs = xOffsets[i];
+                // console.log(centerOffs);
+                if (path.length < centerOffs) {
+                    if (path.closed) {
+                        centerOffs = centerOffs % path.length;
+                    }  else {
+                        centerOffs = undefined;
+                    }
+                }
+                if (centerOffs === undefined) {
+                    glyphTexts[i].remove();
+                } else {
+                    var pathPoint = path.getPointAt(centerOffs);
+                    glyphTexts[i].point = pathPoint;
+                    var tan = path.getTangentAt(centerOffs);
+                    // console.log(tan);
+                    glyphTexts[i].rotation = tan.angle;
+                }
+            }
+    }
+    createAlignedText(str, path, {fontSize: 18});
+    var createAlignedText = function(str, path, style) {
+        if (str && str.length > 0 && path) {
+            // create PointText object for each glyph
+            var glyphTexts = [];
+            for (var i = 0; i < str.length; i++) {
+                glyphTexts[i] = createPointText(str.substring(i, i+1), style);
+                glyphTexts[i].justification = "center";
+            }
+            // for each glyph find center xOffset
+            var xOffsets = [0];
+            for (var i = 1; i < str.length; i++) {
+                var pairText = createPointText(str.substring(i - 1, i + 1), style);
+                pairText.remove();
+                xOffsets[i] = xOffsets[i - 1] + pairText.bounds.width -
+                    glyphTexts[i - 1].bounds.width / 2 - glyphTexts[i].bounds.width / 2;
+            }
+            // set point for each glyph and rotate glyph aorund the point
+            for (var i = 0; i < str.length; i++) {
+                var centerOffs = xOffsets[i];
+                if (path.length < centerOffs) {
+                    if (path.closed) {
+                        centerOffs = centerOffs % path.length;
+                    }  else {
+                        centerOffs = undefined;
+                    }
+                }
+                if (centerOffs === undefined) {
+                    glyphTexts[i].remove();
+                } else {
+                    var pathPoint = path.getPointAt(centerOffs);
+                    glyphTexts[i].point = pathPoint;
+                    var tan = path.getTangentAt(centerOffs);
+                    glyphTexts[i].rotate(tan.angle, pathPoint);
+                }
+            }
+        }
+    }
+
+    // create a PointText object for a string and a style
+    var createPointText = function(str, style) {
+        var text = new PointText();
+        text.content = str;
+        text.style = {
+            fillColor: '#45CEEF',
+        };
+        if (style) {
+            if (style.font) text.font = style.font;
+            if (style.fontFamily) text.fontFamily = style.fontFamily;
+            if (style.fontSize) text.fontSize = style.fontSize;
+            if (style.fontWeight) text.fontWeight = style.fontWeight;
+            if (style.fillColor) text.fillColor = style.fillColor;
+        }
+        return text;
+    }
+
+    // Path Example
+    // var curve = new Curve(new Point(50, 30),  new Point(80, 50), new Point(-100, -70), new Point(270, 320));
+    // var path = new Path({segments: [curve.segment1, curve.segment2], strokeColor: 'red'});
+    // pathfullySelected = true;
+    // createAlignedText("I laugh at watering words", path, {fontSize: 18});
+    // tool.minDistance = 10;
+    // tool.maxDistance = 45;
+
+    var path;
+
+    function onMouseDown(event) {
+      path = new Path();
+      path.fillColor = {
+        hue: Math.random() * 360,
+        saturation: 0.1,
+        brightness: 1
+      };
+
+      path.add(event.point);
+    }
+
+    function onMouseDrag(event) {
+      var step = event.delta / 2;
+      step.angle += 90;
+
+      var top = event.middlePoint + step;
+      var bottom = event.middlePoint - step;
+
+      path.add(top);
+      path.insert(0, bottom);
+      path.smooth();
+
+    }
+
+    function onMouseUp(event) {
+      path.add(event.point);
+      path.closed = true;
+      path.smooth();
+      var fillText = nextItem();
+      createAlignedText(fillText, path, {fontSize: 18});
+
+    }
+    var arr = ["A lullaby is a moment between waking and sleeping.",  "A way to accompany the transition from one state into another and from another into one. As gestures moving, moving gestures. The act of falling asleep.", "But also the moment eyelids open in the morning.", "Going from one (physical) place into another.", "Going home from a party.", "Getting a big breath of air after a moment of distress.", "These constant shifts are accompanied by crafted encounters or invitations to proximity: a lullaby."];
+    var i = 0;
+    var search = document.getElementById('search');
+    function nextItem() {
+        i = i + 1; // increase i by one
+        i = i % arr.length; // if we've gone too high, start from `0` again
+        return arr[i]; // give us back the item of where we are now
+    }
+
+    </script>
+</head>
+<body>
+  <div class="lull">
+  Nearby Lullabies
+<br><br>
+  A lullaby is a moment between waking and sleeping. A way to accompany the transition from one state into another and from another into one. As gestures moving, moving gestures. The act of falling asleep. But also the moment eyelids open in the morning. Going from one (physical) place into another. Going home from a party. Getting a big breath of air after a moment of distress.
+  These constant shifts are accompanied by crafted encounters or invitations to proximity: a lullaby.
+<br><br>
+  Since 2019 Leendert Vooijce and Anouk Hoogendoorn have been researching lullabies, songs traditionally for helping someone to sleep; a gesture to accompany someone in that shift. As such, a lullaby can explore all the shifts in the world that ask for collective care, beginning as an invitation to a shared encounter.
+  Within this project we search for shapes, moments, ways, and manners to approach this idea of transition with care.
+<br><br>
+  Leendert and Anouk met in a conversation about lullabies, and later invited other artists, writers, musicians, composers and dancers to make and think along. This happened through singing, writing, sharing, rocking and documenting collected in a collective platform, Nearby Lullabies.
+<br><br>
+  Website by Matisse A-M
+  </div>
+    <canvas id="canvas" resize></canvas>
+
+
+</body>
+</html>
